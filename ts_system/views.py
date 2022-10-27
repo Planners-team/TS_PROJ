@@ -28,11 +28,13 @@ from django.views.decorators.csrf import csrf_protect
 from updateservice import update
 from .filters import ToolsFilter
 from django.db.models import Q
+from django.contrib.auth.models import User, Permission, Group
 
 @login_required
 def home(request):
     notification = ''
     if request.GET.get('Reload Data') == 'Reload Data':
+        # export_csv_ts_data(request)
         update.get_BP() #first- import updated data from BP
         #now check for each Argo in TS if it exists in BP, if so - update its' fields from BP
         for item in ts_data.objects.exclude(Argo_ID = None):
@@ -154,14 +156,15 @@ def dashboard(request):
     
     SAP_fields = 'Order'
     ts_fields = 'WO1', 'WO10', 'WO2', 'WO3', 'WO4', 'WO5', 'WO6', 'WO7', 'WO8', 'WO9'
-    SAP_values =  wos.objects.order_by().values_list(SAP_fields, flat=True).distinct()
-    ts_values = ts_data.objects.order_by().values_list(ts_fields, flat=True).distinct()
-    # in_TS_not_SAP = ts_data.objects.exclude(wos__Order="")
-    # in_SAP_not_TS = wos.objects.exclude(ts_data__WO1_WO10_WO2_WO3_WO4_WO5_WO6_WO7_WO8_WO9=1)
-    in_TS_not_SAP = SAP_values - ts_values
-    in_SAP_not_TS = ts_values - SAP_values
-    num_in_TS_not_SAP = in_TS_not_SAP.count()
-    num_in_SAP_not_TS = in_SAP_not_TS.count()
+    # SAP_values =  wos.objects.order_by().values_list(SAP_fields, flat=True).distinct()
+    # ts_values = ts_data.objects.order_by().values_list(ts_fields, flat=True).distinct()
+
+    # # in_TS_not_SAP = ts_data.objects.exclude(wos__Order="")
+    # # in_SAP_not_TS = wos.objects.exclude(ts_data__WO1_WO10_WO2_WO3_WO4_WO5_WO6_WO7_WO8_WO9=1)
+    # in_TS_not_SAP = SAP_values - ts_values
+    # in_SAP_not_TS = ts_values - SAP_values
+    # num_in_TS_not_SAP = in_TS_not_SAP.count()
+    # num_in_SAP_not_TS = in_SAP_not_TS.count()
 
     dictionary_BuildQtr = {}
     for qtr in open_tools.order_by().values_list('BuildQtr', flat=True).distinct():
@@ -177,10 +180,10 @@ def dashboard(request):
         "total_empty_wos" : total_empty_wos,
         "keys" : dictionary_BuildQtr.keys(),
         "values" : dictionary_BuildQtr.values(),
-        "in_TS_not_SAP" : in_TS_not_SAP,
-        "in_SAP_not_TS" : in_SAP_not_TS,
-        "num_in_TS_not_SAP" : num_in_TS_not_SAP,
-        "num_in_SAP_not_TS" : num_in_SAP_not_TS,
+        # "in_TS_not_SAP" : in_TS_not_SAP,
+        # "in_SAP_not_TS" : in_SAP_not_TS,
+        # "num_in_TS_not_SAP" : num_in_TS_not_SAP,
+        # "num_in_SAP_not_TS" : num_in_SAP_not_TS,
     }
     return render(request, 'ts_system/dashboard.html',context)
 
@@ -707,5 +710,51 @@ def update_utid(request,utid_id):
         UTID.save()
     return render(request, 'ts_system/home.html')
 
+@login_required
+def all_users(request):
+    users = User.objects.all()
+    return render(request, 'ts_system/all_users.html',{'users':users})
 
+@login_required
+def new_user(request):
+    message = ''
+    l_groups = Group.objects.values_list('name',flat = True) # QuerySet Object
+    groups = list(l_groups)                                     # QuerySet to `list`
+    # groups = Group.objects.order_by().values_list().distinct()
+    if request.method == 'POST':#if submit button was pressed
+        user_name = request.POST.get('user_name')
+        email = request.POST.get('email') 
+        password = request.POST.get('password') 
+        permissions = request.POST.get('permissions')
+        new_user = User.objects.create_user(username= user_name,
+                                 email= email,
+                                 password= password)
+        message = 'User was created successfuly'
+        g = Group.objects.get(name=permissions)
+        g.user_set.add(new_user)
+    context = {
+            'message' : message,
+            'groups' : groups,
+        }
+    return render(request, 'ts_system/new_user.html', context)
 
+@login_required
+def edit_user(request):
+    message = ''
+    users = User.objects.all()
+    l_groups = Group.objects.values_list('name',flat = True) # QuerySet Object
+    groups = list(l_groups)
+    if request.method == 'POST':#if submit button was pressed
+        user_name = request.POST.get('user_name')
+        permissions = request.POST.get('permissions')
+        user = User.objects.get(username= user_name)
+        g = Group.objects.get(name=permissions)
+        user.groups.clear()
+        g.user_set.add(user)
+        message = 'User permisions was updated successfuly'
+    context = {
+            'message' : message,
+            'users' : users,
+            'groups' : groups,
+        }
+    return render(request, 'ts_system/edit_user.html',context)

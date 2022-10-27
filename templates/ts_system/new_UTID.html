@@ -7,8 +7,10 @@
   <head>
     <h1 class = "text-center">Create New UTID</h1>
     </head>
-    <body>
 
+    {% if perms.ts_system.change_ts_system %}
+
+    <body>
       <form method="POST" action="">
         {% csrf_token %}
 
@@ -45,9 +47,12 @@
 
       <br></br>
 
-        <button type="submit">Add</button>
-        
-  <h4 class = "text-center">{{message}}</h4>
+        <button type="submit">Add</button> 
+    <h4 class = "text-center">{{message}}</h4>
+
+  {% else %}   
+  <h3> {{user}}, you are not authorized to access this page. </h3>
+  {% endif %}
 
 {% else %}
   <h4 class = "text-center">You need to login to continue</h4>
