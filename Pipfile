@@ -14,6 +14,7 @@ nltk = "*"
 sklearn = "*"
 lxml = "*"
 django-filter = "*"
+wslwinreg = "*"
 
 [dev-packages]
 
