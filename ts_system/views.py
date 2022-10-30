@@ -13,7 +13,6 @@ from django.db.models import Q, F #for the django queries
 from django.shortcuts import render, redirect
 from ts_system.forms import *
 import csv
-from django.http import HttpResponse
 import datetime
 from ts_system.forms import *
 from django.shortcuts import render, redirect
@@ -29,6 +28,7 @@ from updateservice import update
 from .filters import ToolsFilter
 from django.db.models import Q
 from django.contrib.auth.models import User, Permission, Group
+from django.http import HttpResponse
 
 @login_required
 def home(request):
