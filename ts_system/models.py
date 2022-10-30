@@ -1,4 +1,4 @@
-from winreg import KEY_ENUMERATE_SUB_KEYS
+# from winreg import KEY_ENUMERATE_SUB_KEYS
 from django.db import models
 from django.forms import ModelForm, Textarea
 from django.db import models                              
